@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  go-backend:
+    build:
+      context: .               
+      dockerfile: Dockerfile  
+    ports:
+      - "8081:8080"
+    environment:
+      - PORT=8080
+      - ML_SERVICE_HOST=ml-service
+      - ML_PORT=5001
+    depends_on:
+      - ml-service
+    networks:
+      - financial-network
+
+  ml-service:
+    build:
+      context: .             
+      dockerfile: Dockerfile.python
+    ports:
+      - "5001:5001"
+    environment:
+      - ML_PORT=5001
+    networks:
+      - financial-network
+
+networks:
+  financial-network:
+    driver: bridge

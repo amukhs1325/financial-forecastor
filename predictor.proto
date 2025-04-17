@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package financialforecaster;
+
+option go_package = "github.com/yourusername/financial-forecaster/proto";
+
+service Predictor {
+  rpc TrainModel(TrainRequest) returns (TrainResponse);
+  rpc PredictPrice(PredictRequest) returns (PredictResponse);
+}
+
+message StockData {
+  string symbol = 1;
+  double price = 2;
+  int64 volume = 3;
+  string timestamp = 4;
+}
+
+message TrainRequest {
+  string symbol = 1;
+  repeated StockData historical_data = 2;
+}
+
+message TrainResponse {
+  string symbol = 1;
+  string status = 2;
+  double mae = 3;
+  double rmse = 4;
+}
+
+message PredictRequest {
+  string symbol = 1;
+  repeated StockData current_data = 2;
+}
+
+message PredictResponse {
+  string symbol = 1;
+  double current_price = 2;
+  double predicted_price = 3;
+  double predicted_change = 4;
+  double predicted_change_percent = 5;
+  string timestamp = 6;
+}
