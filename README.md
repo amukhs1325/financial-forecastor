@@ -1,118 +1,23 @@
 # financial-forecastor
-📈 Financial Forecastor
-A containerized microservice suite for real‑time stock data scraping and machine‑learning‑driven price predictions.
-Built with Go (scraper & API) and Python/Flask (model training & inference), orchestrated via Docker Compose.
+Financial Forecastor
 
-🚀 Features
--Real‑time Scraping
- .Fetches price & volume for configurable symbols from Yahoo Finance every 30 seconds with resilient parsing and fallback mocks.
+Overview: Financial Forecastor is a containerized microservice suite designed for real‑time stock data scraping and machine‑learning‑driven price predictions. The core scraper and API are implemented in Go, while model training and inference are handled by a Python/Flask service. Both services are orchestrated together via Docker Compose.
 
--History Cache
- .Stores the last 100 data points per symbol in memory and exposes them via REST.
+Features: The Go service fetches price and volume data from Yahoo Finance every thirty seconds and maintains the last one hundred data points per symbol in memory. The Python service trains a Random Forest regression model using features such as simple moving average and one‑day percent change. Models are retrained in the background as new data accumulates. Both services expose HTTP endpoints for retrieving history, submitting data for training or prediction, and obtaining results.
 
--Machine Learning Service
- .Random Forest regression with standardized features (SMA, percent change), background retraining thread, and HTTP endpoints for training status, predictions, and raw data.
+Prerequisites: To run this project you need Docker and Docker Compose, or local installations of Go version 1.24 or higher and Python version 3.9 or higher with pip for dependency management.
 
--Containerized Deployment
- .Two Dockerfiles (Dockerfile for Go, Dockerfile.python for Python) and a single docker-compose.yml to build/run both services on a bridge network.
+Configuration: Environment variables control ports and service discovery. The PORT variable sets the HTTP port for the Go backend. The ML_SERVICE_HOST and ML_PORT variables specify how the Go service connects to the Python/Flask service.
 
-🔧 Prerequisites
--Docker & Docker Compose
+Installation and Quick Start: Clone the repository to your machine. To deploy with containers, navigate into the docker directory and use Docker Compose to build and start both services together. For local development without Docker, install Python dependencies via pip, launch the ML service on the configured port, then resolve Go modules and run the Go service pointing it at the ML service host and port.
 
--Go 1.24+ (if running Go service locally)
+API Endpoints: The Go backend provides an HTTP GET endpoint at /api/data/{symbol} which returns cached historical data for the given stock symbol. The Python service offers an HTTP POST endpoint at /predict to accept symbol data for training or prediction, and an HTTP GET endpoint at /data/{symbol} to retrieve raw stored data.
 
--Python 3.9+ & pip (if running ML service locally)
+Architecture Overview: The Go service continuously scrapes market data and stores it in memory. When at least five data points are available, it forwards a batch to the Python service over HTTP. The Python service trains or predicts using its regression model and returns results to the Go service, which logs predictions and continues scraping.
 
-⚙️ Configuration
-Environment Variable | Description | Default
-PORT | Port for Go backend HTTP server | 8080
-ML_SERVICE_HOST | Hostname/IP for ML service | ml-service/localhost
-ML_PORT | Port for ML service HTTP server | 5001
+Development and Testing: Maintain code quality with Go and Python linters. Implement unit tests for the scraping logic, prediction routines, and HTTP handlers, as well as integration tests that exercise both services together.
 
-📦 Installation & Quick Start
-Clone the repository
-git clone https://github.com/yourusername/financial-forecastor.git
-cd financial-forecastor
-
-Using Docker Compose (recommended)
-cd docker
-docker-compose up --build
-
-.Go backend → http://localhost:8081
-.ML service → http://localhost:5001
-
-Run in background:
-docker-compose up -d
-
-Local Development (without Docker)
-Start the Python ML service
--pip install -r requirements.txt
--export ML_PORT=5001
--python3 ml_service.py
-
-Start the Go backend
--go mod download
--export PORT=8080
--export ML_SERVICE_HOST=localhost
--export ML_PORT=5001
--go run main.go
-
-🔍 API Endpoints
-Go Backend (port 8081)
--GET /api/data/{symbol}
-   Returns cached history for the given stock symbol.
-
-curl http://localhost:8081/api/data/AAPL
-
-
-ML Service (port 5001)
-.POST /predict
-  Train or predict on incoming data.
-
-  curl -X POST http://localhost:5001/predict \
-     -H "Content-Type: application/json" \
-     -d '{"symbol":"AAPL","data":[{"symbol":"AAPL","price":150,"volume":1200000,"timestamp":"2025-04-17T12:00:00Z"}]}'
-
-.GET /data/{symbol}
- Retrieve raw historical data.
-
- curl http://localhost:5001/data/AAPL
-
-🏗 Architecture Overview
-Go Backend (8080)
-  ├─ Scrape Yahoo Finance every 30s
-  ├─ Cache last 100 points per symbol
-  └─ GET /api/data/{symbol}
-
-      │ POST batch ≥5 points
-      ▼
-
-ML Service (5001)
-  ├─ POST /predict
-  ├─ Train & predict with RandomForest
-  └─ GET /data/{symbol}
-
-🛠 Development & Testing
-.Go linting: golangci-lint run
-.Python linting: flake8 ml_service.py
-.Unit tests: (add your test commands here)
-
-📁 Project Structure
-financial-forecastor/
-├── docker/
-│   ├── docker-compose.yml
-│   ├── Dockerfile            # Go service
-│   └── Dockerfile.python     # Python ML service
-├── main.go                   # Go backend source
-├── go.mod / go.sum           # Go dependencies
-├── ml_service.py             # Python ML service
-├── requirements.txt          # Python dependencies
-├── predictor.proto           # (optional) gRPC schema
-└── README.md                 # Project documentation
-
-
-
-
+Project Structure: The repository includes a docker folder containing the Docker Compose file and Dockerfiles for each service, a main.go source file with the Go backend, go.mod and go.sum for Go dependencies, ml_service.py and requirements.txt for the Python service, an optional predictor.proto schema file, and this README.
 
 
 
